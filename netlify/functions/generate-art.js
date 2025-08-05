@@ -1,12 +1,10 @@
 exports.handler = async (event, context) => {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
   };
 
-  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' };
   }
@@ -30,61 +28,63 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'OpenAI API key not configured' })
+        body: JSON.stringify({ error: 'Gemini API key not configured' })
       };
     }
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    // Step 1: Use Gemini to enhance the prompt
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: prompt,
-        n: 1,
-        size: "1024x1792", // 9:16 aspect ratio
-        quality: "standard",
-        response_format: "url"
+        contents: [{
+          parts: [{
+            text: `Create a detailed, artistic description for an abstract art image based on this prompt: "${prompt}". Make it vivid, descriptive, and suitable for image generation. Focus on colors, shapes, textures, and artistic elements. Keep it under 200 words.`
+          }]
+        }]
       })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API Error:', errorData);
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
+      console.error('Gemini API Error:', errorData);
       return {
-        statusCode: response.status,
+        statusCode: geminiResponse.status,
         headers,
         body: JSON.stringify({ 
-          error: `OpenAI API Error: ${errorData.error?.message || 'Unknown error'}` 
+          error: `Gemini API Error: ${errorData.error?.message || 'Unknown error'}` 
         })
       };
     }
 
-    const data = await response.json();
-    
-    if (!data.data || !data.data[0] || !data.data[0].url) {
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: 'No image URL in response' })
-      };
+    const geminiData = await geminiResponse.json();
+    const enhancedPrompt = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || prompt;
+
+    // Step 2: Generate image using free service (Pollinations)
+    // This is a free AI image generation service
+    const imagePrompt = encodeURIComponent(enhancedPrompt);
+    const imageUrl = `https://image.pollinations.ai/prompt/${imagePrompt}?width=1024&height=1792&seed=${Math.floor(Math.random() * 1000000)}`;
+
+    // Test if the image URL is accessible
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error('Failed to generate image');
     }
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
-        imageUrl: data.data[0].url,
-        revised_prompt: data.data[0].revised_prompt || prompt
+        imageUrl: imageUrl,
+        enhancedPrompt: enhancedPrompt
       })
     };
 
