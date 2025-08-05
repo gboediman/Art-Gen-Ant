@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative Art</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-color: #e0e7eb;
+            --container-bg: #ffffff;
+            --controls-border: #e0e0e0;
+            --text-color-h1: #333;
+            --text-color-p: #666;
+            --label-color: #444;
+            --small-text-color: #888;
+            --slider-bg: #d3d3d3;
+            --slider-thumb: #007bff;
+            --select-bg: #f9f9f9;
+            --select-border: #ccc;
+            --select-text: #555;
+            --art-container-bg: #f8f8f8;
+            --art-container-border: #ddd;
+            --placeholder-color: #aaa;
+            --spinner-color: #007bff;
+        }
+
+        body.dark-mode {
+            --bg-color: #2c2c2c;
+            --container-bg: #3c3c3c;
+            --controls-border: #4c4c4c;
+            --text-color-h1: #f0f0f0;
+            --text-color-p: #cccccc;
+            --label-color: #e0e0e0;
+            --small-text-color: #bbbbbb;
+            --slider-bg: #555;
+            --slider-thumb: #66b3ff;
+            --select-bg: #4a4a4a;
+            --select-border: #666;
+            --select-text: #e0e0e0;
+            --art-container-bg: #4a4a4a;
+            --art-container-border: #5a5a5a;
+            --placeholder-color: #888;
+            --spinner-color: #66b3ff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            background-color: var(--container-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            width: 100%;
+            overflow: hidden;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark-mode .container {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            padding: 40px;
+            width: 400px;
+            border-right: 1px solid var(--controls-border);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .controls h1 {
+            margin-top: 0;
+            color: var(--text-color-h1);
+            text-align: center;
+            font-size: 2.2em;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .controls p {
+            text-align: center;
+            color: var(--text-color-p);
+            margin-bottom: 25px;
+            transition: color 0.3s ease;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--label-color);
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+
+        small {
+            display: block;
+            color: var(--small-text-color);
+            font-size: 0.9em;
+            margin-top: 5px;
+            transition: color 0.3s ease;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: var(--slider-bg);
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s, background-color 0.3s ease;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--slider-thumb);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--select-border);
+            border-radius: 8px;
+            background-color: var(--select-bg);
+            font-size: 1em;
+            color: var(--select-text);
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2C197.3L159.2%2C69.5c-3.2-3.2-8.3-3.2-11.5%2C0L5.4%2C197.3c-3.2%2C3.2-3.2%2C8.3%2C0%2C11.5l11.5%2C11.5c3.2%2C3.2%2C8.3%2C3.2%2C11.5%2C0l125-125l125%2C125c3.2%2C3.2%2C8.3%2C3.2%2C11.5%2C0l11.5-11.5C290.2%2C205.6%2C290.2%2C200.5%2C287%2C197.3z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 12px auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        body.dark-mode select {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2366b3ff%22%20d%3D%22M287%2C197.3L159.2%2C69.5c-3.2-3.2-8.3-3.2-11.5%2C0L5.4%2C197.3c-3.2%2C3.2-3.2%2C8.3%2C0%2C11.5l11.5%2C11.5c3.2%2C3.2%2C8.3%2C3.2%2C11.5%2C0l125-125l125%2C125c3.2%2C3.2%2C8.3%2C3.2%2C11.5%2C0l11.5-11.5C290.2%2C205.6%2C290.2%2C200.5%2C287%2C197.3z%22%2F%3E%3C%2Fsvg%3E');
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        body.dark-mode button {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        #generate-btn {
+            background-color: #007bff;
+            color: white;
+            flex-grow: 1;
+        }
+        #generate-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        body.dark-mode #generate-btn {
+            background-color: #66b3ff;
+        }
+        body.dark-mode #generate-btn:hover {
+            background-color: #4da6ff;
+        }
+
+        #delete-btn {
+            background-color: #dc3545;
+            color: white;
+            flex-grow: 1;
+        }
+        #delete-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        body.dark-mode #delete-btn {
+            background-color: #ff6666;
+        }
+        body.dark-mode #delete-btn:hover {
+            background-color: #ff4d4d;
+        }
+
+        #save-btn {
+            background-color: #28a745;
+            color: white;
+            margin-top: 20px;
+            width: fit-content;
+            align-self: center;
+        }
+        #save-btn:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        body.dark-mode #save-btn {
+            background-color: #4CAF50;
+        }
+        body.dark-mode #save-btn:hover {
+            background-color: #45a049;
+        }
+
+        #toggle-dark-mode-btn {
+            background-color: #6c757d;
+            color: white;
+            margin-top: 20px;
+            width: 100%;
+        }
+        #toggle-dark-mode-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        body.dark-mode #toggle-dark-mode-btn {
+            background-color: #888;
+        }
+        body.dark-mode #toggle-dark-mode-btn:hover {
+            background-color: #777;
+        }
+
+        .output {
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #art-container {
+            width: 100%;
+            max-width: 540px;
+            height: 960px;
+            background-color: var(--art-container-bg);
+            border: 1px solid var(--art-container-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            position: relative;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body.dark-mode #art-container {
+             box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+        }
+
+        #art-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        #placeholder {
+            color: var(--placeholder-color);
+            font-size: 1.2em;
+            padding: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .spinner {
+            border: 8px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--spinner-color);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.2s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: border-left-color 0.3s ease;
+        }
+        body.dark-mode .spinner {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        .error-message {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        body.dark-mode .error-message {
+            color: #ff6b6b;
+            background-color: #4a2c2c;
+            border-color: #6b3939;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                max-width: 700px;
+            }
+
+            .controls {
+                width: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--controls-border);
+            }
+
+            .output {
+                padding: 20px;
+            }
+
+            #art-container {
+                width: 90%;
+                height: auto;
+                padding-bottom: calc(16 / 9 * 90%);
+                position: relative;
+                max-width: none;
+            }
+
+            #art-image {
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .controls {
+                padding: 20px;
+            }
+            .controls h1 {
+                font-size: 1.8em;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <h1>🎨 Generative Art</h1>
+            <p>Adjust the parameters and create your abstract artwork!</p>
+
+            <div class="control-group">
+                <label for="slider-pola">Pattern Complexity (1-5): <span id="val-pola">3</span></label>
+                <input type="range" id="slider-pola" min="1" max="5" value="3" class="rounded-lg">
+                <small>Higher value means more intricate and detailed patterns.</small>
+            </div>
+
+            <div class="control-group">
+                <label for="slider-gelap-terang">Light/Dark Balance (1-5): <span id="val-gelap-terang">3</span></label>
+                <input type="range" id="slider-gelap-terang" min="1" max="5" value="3" class="rounded-lg">
+                <small>1: Very bright, 3: Balanced, 5: Very dark tones.</small>
+            </div>
+
+            <div class="control-group">
+                <label for="slider-cool-warm">Color Temperature (1-5): <span id="val-cool-warm">3</span></label>
+                <input type="range" id="slider-cool-warm" min="1" max="5" value="3" class="rounded-lg">
+                <small>1: Cool colors (blues/greens), 5: Warm colors (reds/oranges).</small>
+            </div>
+
+            <div class="control-group">
+                <label for="artist-select">Art Style</label>
+                <select id="artist-select" class="rounded-lg">
+                    <option value="Wassily Kandinsky">Kandinsky (Abstract Expressionism)</option>
+                    <option value="Piet Mondrian">Mondrian (Geometric Abstraction)</option>
+                    <option value="Jackson Pollock">Pollock (Action Painting)</option>
+                    <option value="Mark Rothko">Rothko (Color Field)</option>
+                    <option value="Paul Klee">Klee (Bauhaus Style)</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="generate-btn" class="rounded-lg">🎨 Generate Art</button>
+                <button id="delete-btn" class="rounded-lg">🗑️ Clear</button>
+            </div>
+            <button id="toggle-dark-mode-btn" class="rounded-lg">🌙 Toggle Dark Mode</button>
+        </div>
+
+        <div class="output">
+            <div id="art-container" class="rounded-lg">
+                <p id="placeholder">Configure your settings and press "Generate Art" to create your masterpiece!</p>
+                <div id="loading-spinner" class="spinner" style="display:none;"></div>
+            </div>
+            <button id="save-btn" style="display:none;" class="rounded-lg">💾 Save Image</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateBtn = document.getElementById('generate-btn');
+            const deleteBtn = document.getElementById('delete-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const artContainer = document.getElementById('art-container');
+            const placeholder = document.getElementById('placeholder');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const toggleDarkModeBtn = document.getElementById('toggle-dark-mode-btn');
+
+            const sliderPola = document.getElementById('slider-pola');
+            const valPola = document.getElementById('val-pola');
+            const sliderGelapTerang = document.getElementById('slider-gelap-terang');
+            const valGelapTerang = document.getElementById('val-gelap-terang');
+            const sliderCoolWarm = document.getElementById('slider-cool-warm');
+            const valCoolWarm = document.getElementById('val-cool-warm');
+            const artistSelect = document.getElementById('artist-select');
+
+            // Update slider values in the UI
+            sliderPola.addEventListener('input', () => { valPola.textContent = sliderPola.value; });
+            sliderGelapTerang.addEventListener('input', () => { valGelapTerang.textContent = sliderGelapTerang.value; });
+            sliderCoolWarm.addEventListener('input', () => { valCoolWarm.textContent = sliderCoolWarm.value; });
+
+            function createPrompt() {
+                const pola = parseInt(sliderPola.value);
+                const gelapTerang = parseInt(sliderGelapTerang.value);
+                const coolWarm = parseInt(sliderCoolWarm.value);
+                const artist = artistSelect.value;
+                
+                let complexityText = '';
+                if (pola == 1) complexityText = 'simple, minimalist composition with clean lines';
+                else if (pola == 2) complexityText = 'moderately simple design with some detail';
+                else if (pola == 3) complexityText = 'balanced complexity with moderate detail';
+                else if (pola == 4) complexityText = 'intricate design with rich detail';
+                else if (pola == 5) complexityText = 'extremely complex and highly detailed composition';
+
+                let lightnessText = '';
+                if (gelapTerang == 1) lightnessText = 'very bright, light palette with high contrast';
+                else if (gelapTerang == 2) lightnessText = 'predominantly bright colors with subtle shadows';
+                else if (gelapTerang == 3) lightnessText = 'balanced light and dark tones';
+                else if (gelapTerang == 4) lightnessText = 'predominantly dark colors with bright highlights';
+                else if (gelapTerang == 5) lightnessText = 'very dark, moody palette with deep shadows';
+
+                let temperatureText = '';
+                if (coolWarm == 1) temperatureText = 'cool color palette dominated by blues, cyans, and cool greens';
+                else if (coolWarm == 2) temperatureText = 'mostly cool colors with hints of neutral tones';
+                else if (coolWarm == 3) temperatureText = 'balanced mix of cool and warm colors';
+                else if (coolWarm == 4) temperatureText = 'mostly warm colors with cool accents';
+                else if (coolWarm == 5) temperatureText = 'warm color palette dominated by reds, oranges, and yellows';
+
+                return `Create an abstract artwork in the distinctive style of ${artist}. The composition should feature ${complexityText}. Use ${lightnessText} and incorporate ${temperatureText}. The artwork should be vertical format (9:16 aspect ratio), high quality, and capture the essence of ${artist}'s artistic vision. Focus on artistic composition, color harmony, and visual impact.`;
+            }
+
+            generateBtn.addEventListener('click', async () => {
+                const prompt = createPrompt();
+                
+                // Show loading state
+                placeholder.style.display = 'none';
+                const existingImage = document.getElementById('art-image');
+                if (existingImage) existingImage.remove();
+                loadingSpinner.style.display = 'block';
+                saveBtn.style.display = 'none';
+                generateBtn.disabled = true;
+                generateBtn.textContent = '🎨 Generating...';
+
+                try {
+                    const response = await fetch('/.netlify/functions/generate-art', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: prompt })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    if (!data.imageUrl) {
+                        throw new Error('No image URL received from server');
+                    }
+
+                    // Create and display image
+                    const imgElement = document.createElement('img');
+                    imgElement.id = 'art-image';
+                    imgElement.src = data.imageUrl;
+                    imgElement.alt = 'Generated Artwork';
+                    imgElement.onload = () => {
+                        saveBtn.style.display = 'block';
+                    };
+                    imgElement.onerror = () => {
+                        throw new Error('Failed to load generated image');
+                    };
+
+                    artContainer.appendChild(imgElement);
+
+                } catch (error) {
+                    console.error('Error generating art:', error);
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error-message';
+                    errorDiv.innerHTML = `
+                        <strong>❌ Generation Failed</strong><br>
+                        ${error.message}<br>
+                        <small>Please check your API key and try again.</small>
+                    `;
+                    artContainer.appendChild(errorDiv);
+                    
+                } finally {
+                    loadingSpinner.style.display = 'none';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '🎨 Generate Art';
+                }
+            });
+
+            deleteBtn.addEventListener('click', () => {
+                artContainer.innerHTML = '';
+                placeholder.style.display = 'block';
+                saveBtn.style.display = 'none';
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const imgElement = document.getElementById('art-image');
+                if (imgElement && imgElement.src) {
+                    const link = document.createElement('a');
+                    link.href = imgElement.src;
+                    link.download = `generative-art-${Date.now()}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            });
+
+            // Dark mode functionality (removed localStorage dependency)
+            let isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+
+            toggleDarkModeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                isDarkMode = !isDarkMode;
+            });
+        });
+    </script>
+</body>
+</html>

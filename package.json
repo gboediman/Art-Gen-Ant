@@ -1,0 +1,17 @@
+﻿{
+  "name": "art-generator",
+  "version": "1.0.0",
+  "description": "AI-powered generative art application",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gboediman/art-generator.git"
+  },
+  "author": "gboediman",
+  "license": "MIT"
+}
